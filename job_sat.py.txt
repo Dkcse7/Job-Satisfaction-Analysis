@@ -1,0 +1,186 @@
+import tkinter as tk
+from tkinter import filedialog
+import tkinter.font as font
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+
+class JobSatisfactionPredictor:
+    
+    def __init__(self):
+        self.model = LogisticRegression(random_state=42)
+    
+    def train(self):
+        # Replace this with your actual dataset
+        data = pd.read_csv('job_satisfaction_dataset.csv')
+        features = data[['Age', 'Gender', 'Input1', 'Input2', 'Input3', 'Input4', 'Input5']]
+        target = data['SatisfactionLevel']
+        
+        # Train the model
+        self.model.fit(features, target)
+    
+    def predict(self, input_data):
+        try:
+            input_data = [int(i) for i in input_data]
+            satisfaction_level = self.model.predict([input_data])[0]
+            return satisfaction_level
+        except Exception as e:
+            print(f"Error predicting job satisfaction: {e}")
+            return None
+
+def check_type(data):
+    if type(data) == str or type(data) == str:
+        return str(data).title()
+    if type(data) == list or type(data) == tuple:
+        str_list = ""
+        for i, item in enumerate(data):
+            str_list += item + ", "
+        return str_list
+    else:
+        return str(data)
+
+def get_suggestions(low_factors):
+    suggestions = []
+    
+    if 'Input1' in low_factors:
+        suggestions.append("1. Explore opportunities for skill development.")
+    if 'Input2' in low_factors:
+        suggestions.append("2. Enhance communication and collaboration within the team.")
+    if 'Input3' in low_factors:
+        suggestions.append("3. Consider improvements in work-life balance.")
+    if 'Input4' in low_factors:
+        suggestions.append("4. Foster better peer cooperation.")
+    if 'Input5' in low_factors:
+        suggestions.append("5. Engage in more social interactions to improve extraversion.")
+    
+    return suggestions
+
+def prediction_result(top, applicant_name, cv_path, input_values):
+    top.withdraw()
+    applicant_data = {"Candidate Name": applicant_name.get(),  "CV Location": cv_path}
+    
+    age = input_values[0]
+    
+    print("\n############# Candidate Entered Data #############\n")
+    print(applicant_data, input_values)
+    
+    satisfaction_level = satisfaction_predictor.predict(input_values)
+    print("\n############# Predicted Satisfaction Level #############\n")
+    print(satisfaction_level)
+    
+    result = tk.Tk()
+    result.overrideredirect(False)
+    result.geometry("{0}x{1}+0+0".format(result.winfo_screenwidth(), result.winfo_screenheight()))
+    result.configure(background='White')
+    result.title("Predicted Job Satisfaction")
+    
+    # Title
+    title_font = font.Font(family='Arial', size=40, weight='bold')
+    tk.Label(result, text="Result - Job Satisfaction Prediction", foreground='green', bg='white', font=title_font, pady=10, anchor=tk.CENTER).pack(fill=tk.BOTH)
+    
+    tk.Label(result, text=str('{} : {}'.format("Name:", applicant_name.get())).title(), foreground='black', bg='white', anchor='w').pack(fill=tk.BOTH)
+    tk.Label(result, text=str('{} : {}'.format("Age:", age)), foreground='black', bg='white', anchor='w').pack(fill=tk.BOTH)
+    
+    if satisfaction_level is not None:
+        category = 'High' if satisfaction_level > 8 else 'Medium' if 3 < satisfaction_level <= 8 else 'Low'
+        tk.Label(result, text=str("Predicted Satisfaction Level: " + category).title(), foreground='black', bg='white', anchor='w').pack(fill=tk.BOTH)
+        
+        if category == 'Low':
+            low_factors = [f'Input{i+1}' for i, val in enumerate(input_values) if 1 <= val <= 3]
+            suggestions = get_suggestions(low_factors)
+            
+            if suggestions:
+                tk.Label(result, text="Suggestions to Improve Job Satisfaction:", foreground='blue', bg='white', anchor='w').pack(fill=tk.BOTH)
+                
+                for suggestion in suggestions:
+                    tk.Label(result, text=suggestion, foreground='black', bg='white', anchor='w', justify='left', wraplength=600).pack(fill=tk.BOTH)
+            
+        else:
+            tk.Label(result, text="No specific suggestions for high satisfaction level.", foreground='black', bg='white', anchor='w').pack(fill=tk.BOTH)
+        
+    else:
+        tk.Label(result, text="Error predicting job satisfaction. Please check input values.", foreground='red', bg='white', anchor='w').pack(fill=tk.BOTH)
+    
+    tk.Button(result, text="Exit", command=lambda:  result.destroy()).pack()
+    
+    result.mainloop()
+
+def predict_job_satisfaction():
+    root.withdraw()
+    
+    top = tk.Toplevel()
+    top.geometry('700x500')
+    top.configure(background='black')
+    top.title("Job Satisfaction Prediction")
+    
+    title_font = font.Font(family='Helvetica', size=20, weight='bold')
+    tk.Label(top, text="Job Satisfaction Prediction", foreground='red', bg='black', font=title_font, pady=10).pack()
+
+    tk.Label(top, text="Applicant Name", foreground='white', bg='black').place(x=70, y=130)
+    tk.Label(top, text="Age", foreground='white', bg='black').place(x=70, y=160)
+    tk.Label(top, text="Gender", foreground='white', bg='black').place(x=70, y=190)
+    tk.Label(top, text="Upload Resume", foreground='white', bg='black').place(x=70, y=220)
+    tk.Label(top, text="Input1 (e.g., Learning Opportunities)", foreground='white', bg='black').place(x=70, y=250)
+    tk.Label(top, text="Input2 (e.g., Team Collaboration)", foreground='white', bg='black').place(x=70, y=280)
+    tk.Label(top, text="Input3 (e.g., Work-Life Balance)", foreground='white', bg='black').place(x=70, y=310)
+    tk.Label(top, text="Input4 (e.g., Peer Cooperation)", foreground='white', bg='black').place(x=70, y=340)
+    tk.Label(top, text="Input5 (e.g., Extraversion)", foreground='white', bg='black').place(x=70, y=370)
+    
+    applicant_name = tk.Entry(top)
+    applicant_name.place(x=450, y=130, width=160)
+    age = tk.Entry(top)
+    age.place(x=450, y=160, width=160)
+    gender = tk.IntVar()
+    tk.Radiobutton(top, text="Male", variable=gender, value=1, padx=7).place(x=450, y=190)
+    tk.Radiobutton(top, text="Female", variable=gender, value=0, padx=3).place(x=540, y=190)
+    cv = tk.Button(top, text="Select File", command=lambda:  open_file(cv))
+    cv.place(x=450, y=220, width=160)
+    input1 = tk.Entry(top)
+    input1.insert(0, '1-10')
+    input1.place(x=450, y=250, width=160)
+    input2 = tk.Entry(top)
+    input2.insert(0, '1-10')
+    input2.place(x=450, y=280, width=160)
+    input3 = tk.Entry(top)
+    input3.insert(0, '1-10')
+    input3.place(x=450, y=310, width=160)
+    input4 = tk.Entry(top)
+    input4.insert(0, '1-10')
+    input4.place(x=450, y=340, width=160)
+    input5 = tk.Entry(top)
+    input5.insert(0, '1-10')
+    input5.place(x=450, y=370, width=160)
+    
+    submit_btn = tk.Button(top, padx=2, pady=0, text="Submit", bd=0, foreground='white', bg='red', font=(12))
+    submit_btn.config(command=lambda: prediction_result(top, applicant_name, loc, [age.get(), gender.get(), input1.get(), input2.get(), input3.get(), input4.get(), input5.get()]))
+    submit_btn.place(x=350, y=400, width=200)
+    
+    top.mainloop()
+
+def open_file(b4):
+    global loc
+    name = filedialog.askopenfilename(initialdir="C:/Users/Batman/Documents/Programming/tkinter/",
+                                      filetypes=(("Document", "*.docx*"), ("PDF", "*.pdf*"), ('All files', '*')),
+                                      title="Choose a file."
+                                      )
+    try:
+        filename = os.path.basename(name)
+        loc = name
+    except:
+        filename = name
+        loc = name
+    b4.config(text=filename)
+    return
+
+if __name__ == "__main__":
+    satisfaction_predictor = JobSatisfactionPredictor()
+    satisfaction_predictor.train()
+
+    root = tk.Tk()
+    root.geometry('700x500')
+    root.configure(background='white')
+    root.title("Job Satisfaction Prediction System")
+    title_font = font.Font(family='Helvetica', size=25, weight='bold')
+    home_btn_font = font.Font(size=12, weight='bold')
+    tk.Label(root, text="Job Satisfaction Prediction System", bg='white', font=title_font, pady=30).pack()
+    tk.Button(root, padx=4, pady=4, width=30, text="Predict Job Satisfaction", bg='black', foreground='white', bd=1, font=home_btn_font, command=predict_job_satisfaction).place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+    root.mainloop()
